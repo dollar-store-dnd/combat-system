@@ -15,10 +15,4 @@ def start_combat() -> None:
 
 if __name__ == "__main__":
     load_game_assets()
-    from pprint import pprint
-
-    pprint(armor)
-    pprint(weapons)
-    print(roll_dice(weapons[0].damage))
-
     start_combat()
