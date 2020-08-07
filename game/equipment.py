@@ -1,4 +1,4 @@
-from game import weapons
+from game import armor, weapons
 
 from json import loads
 from typing import NamedTuple, Dict
@@ -6,19 +6,34 @@ from zipfile import Path as ZipPath
 
 
 class Armor(NamedTuple):
-    pass
+    name: str
+    ac: int
+
+
+class Damage(NamedTuple):
+    die_type: int
+    dice: int
+    type: str
 
 
 class Weapon(NamedTuple):
     name: str
-    damage: Dict
+    damage: Damage
 
 
-def register_weapon(zip_path: ZipPath) -> None:
-    weapon_data = loads(zip_path.read_text())
-    weapon = Weapon(name=weapon_data["name"], damage=weapon_data["damage"])
-    weapons.append(weapon)
+def _register_weapon(data: Dict) -> None:
+    new_weapon = Weapon(name=data["name"], damage=Damage(**data["damage"]))
+    weapons.append(new_weapon)
 
 
-def register_object():
-    pass
+def _register_armor(data: Dict):
+    new_armor = Armor(name=data["name"], ac=data["ac"]["base"])
+    armor.append(new_armor)
+
+
+register_map = {"armor": _register_armor, "weapon": _register_weapon}
+
+
+def register_object(zip_path: ZipPath):
+    data = loads(zip_path.read_text())
+    register_map[data["type"]](data)

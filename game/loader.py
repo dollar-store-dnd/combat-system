@@ -1,6 +1,5 @@
-from game.equipment import register_weapon
+from game.equipment import register_object
 
-from json import load
 from typing import Dict
 from pathlib import Path
 from zipfile import ZipFile, Path as ZipPath
@@ -28,18 +27,27 @@ def _load_package_config(zip: ZipFile):
     return config_information
 
 
-def _load_game_json() -> Dict:
-    pass
-
-
 def load_game_assets():
     """"""
     zip = ZipFile(_locate_available_datastore())
     config = _load_package_config(zip=zip)
 
+    print("#" * 64)
     print("Assets loading...")
     print("Package:", config["package"]["name"], "| V", config["package"]["version"])
-    simple_weapons = ZipPath(zip) / "weapons" / "simple" / "melee"
-    
-    for path in simple_weapons.iterdir():
-        register_weapon(path)
+
+    def recursive_object_registration(base_path: ZipPath):
+        for path in base_path.iterdir():
+            if path.is_file():
+                register_object(path)
+            else:
+                recursive_object_registration(path)
+
+    simple_melee_weapons = ZipPath(zip) / "weapons" / "simple" / "melee"
+    armor = ZipPath(zip) / "armor"
+
+    recursive_object_registration(simple_melee_weapons)
+    recursive_object_registration(armor)
+
+    print("Assets Loaded.")
+    print("#" * 64)
