@@ -1,0 +1,2 @@
+class DummyAgent:
+    pass
