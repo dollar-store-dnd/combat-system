@@ -4,3 +4,6 @@ Game Services Module
 - Brings in classes, background, and races
 - Brings in spellcasting (or equivalent)
 """
+
+armor = []
+weapons = []
