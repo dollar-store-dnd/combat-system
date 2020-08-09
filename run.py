@@ -8,6 +8,7 @@ from game.dice import D20_DICE
 from pprint import pprint
 from game.equipment import Damage
 from time import sleep
+from combat import TurnManager
 
 load_game_assets()
 
@@ -16,6 +17,7 @@ load_game_assets()
 class Enemy:
     health = 20
     weapon = weapons[0]
+    armor = armor[2]
     name = "Steven Seagal"
 
 
@@ -23,13 +25,23 @@ class Enemy:
 class PlayerCharacter:
     player_name: str = "Joe Malone"
     name: str = "Moe Jalone"
-    health: int = 20
+    max_health: int = 20
+    current_hp: int = 20
     weapon = weapons[0]
+    armor = armor[0]
+
+    def heal(self, add_hp):
+        max_add = self.max_health - self.current_hp
+        self.current_hp += min(max_add, add_hp)
+        if max_add == 0:
+            print("You're already healthy")
+
+        print("You healed for: ", min(max_add, add_hp))
 
 
 def print_characters(character: PlayerCharacter, enemy: Enemy):
     print("#" * 64)
-    print("PLAYER:\n", character.name, "HP:", character.health)
+    print("PLAYER:\n", character.name, "HP:", character.current_hp)
     print("ENEMY:\n", enemy.name, "HP:", enemy.health)
     print("#" * 64)
 
@@ -40,24 +52,19 @@ def print_roll(roll: int):
 
 def start_combat() -> None:
     """Basic combat loop"""
-    turn_queue = deque()
+    turn_manager = TurnManager()
 
     main_char = PlayerCharacter()
     enemy_char = Enemy()
 
-    player_roll = roll_dice(damage=D20_DICE)
-    enemy_roll = roll_dice(damage=D20_DICE)
+    turn_manager.add_combatant(main_char, False)
 
-    while player_roll == enemy_roll:
-        player_roll = roll_dice(damage=D20_DICE)
-        enemy_roll = roll_dice(damage=D20_DICE)
 
-    if player_roll > enemy_roll:
-        turn_queue.appendleft(main_char)
-        turn_queue.appendleft(enemy_char)
-    else:
-        turn_queue.appendleft(enemy_char)
-        turn_queue.appendleft(main_char)
+
+    turn_manager.initiative()
+    exit()
+
+    sleep(1)
 
     while True:
         character = turn_queue[-1]
@@ -71,12 +78,16 @@ def start_combat() -> None:
             if action == "Attack":
                 hit = roll_dice(damage=D20_DICE)
                 print_roll(hit)
+                multiplier = 1
+                if hit == 20:
+                    multiplier = 2
 
-                if hit >= 15:
-                    damage = roll_dice(character.weapon.damage)
+                if hit >= enemy_char.armor.ac:
+                    damage = roll_dice(character.weapon.damage) * multiplier
                     enemy_char.health -= damage
                     print("Enemy took:", damage, "damage!")
                     print("End turn!")
+
                     if enemy_char.health <= 0:
                         print(main_char.name, "WINS!!!")
                         break
@@ -86,18 +97,26 @@ def start_combat() -> None:
 
             elif action == "Heal":
                 heal = roll_dice(damage=Damage(die_type=10, dice=1, type=""))
-                main_char.health += heal
-                print("Healed for:", heal)
+                character.heal(heal)
+
+            else:
+                print("Inteligance check failed: skip your turn!")
 
         else:
             hit = roll_dice(damage=D20_DICE)
+            print_roll(hit)
 
-            if hit >= 15:
+            if hit == 1:
+                print(enemy_char.name, "collapses from a heart attack and dies!")
+                enemy_char.health = 0
+                break
+
+            elif hit >= main_char.armor.ac:
                 damage = roll_dice(character.weapon.damage)
-                main_char.health -= damage
+                main_char.current_hp -= damage
                 print("You took:", damage, "damage!")
 
-                if main_char.health <= 0:
+                if main_char.current_hp <= 0:
                     print("YOU LOSE!!!")
                     break
             else:
