@@ -1,31 +1,37 @@
 from collections import deque, defaultdict
-from game.dice import D20_DICE, roll_dice
 from random import shuffle
+
+from game.actors import Combatable
+from game.dice import roll_dice, D20_DICE
 
 
 class CombatSession:
-    pass
+    def __init__(self):
+        raise NotImplementedError
 
 
 class TurnManager:
     def __init__(self):
         self.queue = deque()
-
         self.combatants = []
 
-    def add_combatant(self, combatant, is_enemy):
+    def add_combatant(self, combatant: Combatable, is_enemy: bool = True) -> None:
         self.combatants.append((combatant, is_enemy))
+
+    def remove_combatant(self, combatant: Combatable) -> None:
+        raise NotImplementedError
 
     def initiative(self):
         order = defaultdict(list)
 
-        for c in self.combatants:
+        for combatant in self.combatants:
             init_roll = roll_dice(damage=D20_DICE)
-            order[init_roll].append(c)
+            order[init_roll].append(combatant)
 
         for roll in sorted(order.keys(), reverse=True):
             shuffle(order[roll])
-            for c in order[roll]:
-                self.queue.appendleft(c)
-        print(self.queue)
-        print(order)
+            for combatant in order[roll]:
+                self.queue.appendleft(combatant)
+
+    def next_turn(self):
+        raise NotImplementedError

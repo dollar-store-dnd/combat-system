@@ -22,12 +22,12 @@ class Alignment(str, Enum):
 
 
 class AbilityScore(Enum):
-    Strength = auto()
-    Dexterity = auto()
-    Constitution = auto()
-    Intelligence = auto()
-    Wisdom = auto()
-    Charisma = auto()
+    Strength = 0
+    Dexterity = 1
+    Constitution = 2
+    Intelligence = 3
+    Wisdom = 4
+    Charisma = 5
 
 
 class Skill(Enum):
@@ -50,6 +50,15 @@ class Skill(Enum):
     Stealth = auto()
     Survival = auto()
 
+
+ABILITY_SHORTNAME_ENUM_MAP = {
+    "STR": AbilityScore.Strength,
+    "DEX": AbilityScore.Dexterity,
+    "CON": AbilityScore.Constitution,
+    "INT": AbilityScore.Intelligence,
+    "WIS": AbilityScore.Wisdom,
+    "CHA": AbilityScore.Charisma,
+}
 
 SKILLS_ABILITY_MAP = {
     Skill.Acrobatics: AbilityScore.Dexterity,
