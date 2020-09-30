@@ -9,6 +9,13 @@ class CombatSession:
     def __init__(self):
         raise NotImplementedError
 
+    def print_characters(self, character: 'PlayerCharacter', enemy: 'Enemy'):
+        # TODO: How could we extend this to multiple enemies
+        print("#" * 64)
+        print("PLAYER:\n", character.name, "HP:", character.current_hp)
+        print("ENEMY:\n", enemy.name, "HP:", enemy.current_hp)
+        print("#" * 64)
+
 
 class TurnManager:
     def __init__(self):
@@ -17,6 +24,7 @@ class TurnManager:
 
     def add_combatant(self, combatant: Combatable, is_enemy: bool = True) -> None:
         self.combatants.append((combatant, is_enemy))
+        # print(".")
 
     def remove_combatant(self, combatant: Combatable) -> None:
         raise NotImplementedError

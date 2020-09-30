@@ -23,8 +23,25 @@ class Enemy(Combatable):
     # TODO: Make a sort of enemy stat display method
     # TODO: What if combatable makes it so that we have to create methods for fighting
     # Such as in essences performing a new action
-    def perform_action(allies: List[Combatable], enemies: List[Combatable]):
-        raise NotImplementedError
+    def perform_action(self, allies: List[Combatable], enemies: List[Combatable]):
+        hit = roll_dice(damage=D20_DICE)
+        print_roll(hit)
+
+        if hit == 1:
+            print(self.name, "collapses from a heart attack and dies!")
+            self.current_hp = 0
+
+        elif hit >= allies[0].armor.ac:
+            damage = roll_dice(self.weapon.damage)
+            allies[0].current_hp -= damage
+            print("You took:", damage, "damage!")
+
+            if allies[0].current_hp <= 0:
+                print(allies[0].name, " DIED!!")
+
+        else:
+            print(self.name, "MISSED!")
+
 
 @dataclass
 class PlayerCharacter(Combatable):
@@ -43,17 +60,75 @@ class PlayerCharacter(Combatable):
 
         print("You healed for: ", min(max_add, add_hp))
 
-    # TODO: Make a sort of player stat display method
-    def perform_action(allies: List[Combatable], enemies: List[Combatable]):
-        raise NotImplementedError
+    # TODO: Make a player stat display method
+    def perform_action(self, allies: List[Combatable], enemies: List[Combatable]):
+        print("Your turn:")
+        action = input("- Attack   - Heal \n")
 
+        if action == "Attack":
+            print("Who do you want to attack?\n")
+            print("Enemies:  ")
+            for x in enemies:
+                print(x.name, "  ")
 
-def print_characters(character: PlayerCharacter, enemy: Enemy):
-    # TODO: How could we extend this to multiple enemies
-    print("#" * 64)
-    print("PLAYER:\n", character.name, "HP:", character.current_hp)
-    print("ENEMY:\n", enemy.name, "HP:", enemy.current_hp)
-    print("#" * 64)
+            print("\nAllies:  ")
+            found = False
+            for x in allies:
+                print(x.name, "  ")
+            victim = input()
+
+            for x in enemies:
+                if victim == x.name:
+                    victim = x
+                    found = True
+                    break
+            for x in allies:
+                if victim == x.name:
+                    victim = x
+                    found = True
+                    break
+            if not found:
+                return print(self.name, " stumbled in confusion")
+
+            hit = roll_dice(damage=D20_DICE)
+            print_roll(hit)
+            multiplier = 1
+            if hit == 20:
+                multiplier = 2
+
+            if hit >= victim.armor.ac:
+                damage = roll_dice(self.weapon.damage) * multiplier
+                victim.current_hp -= damage
+                print(victim.name, " took:", damage, "damage!")
+                print("End turn!")
+
+                if victim.current_hp <= 0:
+                    print(victim.name, "DIED!")
+                    enemies.remove(victim)
+
+            else:
+                print(self.name, "MISSED!")
+
+        elif action == "Heal":
+            found = False
+            print("Who do you want to heal?\n")
+            print("Allies:")
+            for x in allies:
+                print(x.name, "  ")
+            healed = input()
+            for x in allies:
+                if healed == x.name:
+                    healed = x
+                    found = True
+                    break
+
+            if not found:
+                return print(self.name, " stumbled in confusion")
+            heal = roll_dice(damage=Damage(die_type=10, dice=1, type=""))
+            x.heal(heal)
+
+        else:
+            print("Inteligance check failed: skip your turn!")
 
 
 def print_roll(roll: int):
@@ -64,11 +139,19 @@ def start_combat() -> None:
     """Basic combat loop"""
     turn_manager = TurnManager()
 
-    main_char = PlayerCharacter()
-    enemy_char = Enemy()
+    friends = int(input("How many Joe's will fight? \n"))
+    allies = []
+    for x in range(0, friends):
+        allies.append(PlayerCharacter())
+        turn_manager.add_combatant(allies[x], is_enemy=False)
 
-    turn_manager.add_combatant(main_char, is_enemy=False)
-    turn_manager.add_combatant(enemy_char)
+    bad_guys = int(input("How many enemies will be fought? \n"))
+    enemies = []
+    for x in range(0, bad_guys):
+        enemies.append(Enemy())
+        turn_manager.add_combatant(enemies[x])
+
+
 
     # TODO: How to prevent adding the same combatant twice such as
     # turn_manager.add_combatant(enemy_char, True)
@@ -76,64 +159,28 @@ def start_combat() -> None:
 
     turn_manager.initiative()
 
-    sleep(1)
+    # sleep(1)
 
     while True:
         # TODO: How can we use our new turn manager to manage this?
         combatant, is_enemy = turn_manager.next_turn()
 
-        # TODO: This is a future thought, but how could be move this into a combat session object?
-        if not is_enemy:
-            print_characters(main_char, enemy_char)
-            print("Your turn:")
-            action = input("- Attack   - Heal \n")
-
-            if action == "Attack":
-                hit = roll_dice(damage=D20_DICE)
-                print_roll(hit)
-                multiplier = 1
-                if hit == 20:
-                    multiplier = 2
-
-                if hit >= enemy_char.armor.ac:
-                    damage = roll_dice(combatant.weapon.damage) * multiplier
-                    enemy_char.current_hp -= damage
-                    print("Enemy took:", damage, "damage!")
-                    print("End turn!")
-
-                    if enemy_char.current_hp <= 0:
-                        print(main_char.name, "WINS!!!")
-                        break
-
-                else:
-                    print(main_char.name, "MISSED!")
-
-            elif action == "Heal":
-                heal = roll_dice(damage=Damage(die_type=10, dice=1, type=""))
-                combatant.heal(heal)
-
-            else:
-                print("Inteligance check failed: skip your turn!")
-
-        else:
-            hit = roll_dice(damage=D20_DICE)
-            print_roll(hit)
-
-            if hit == 1:
-                print(enemy_char.name, "collapses from a heart attack and dies!")
-                enemy_char.current_hp = 0
+        if is_enemy:
+            print("Enemy Turn:  ", combatant.name)
+            combatant.perform_action(enemies, allies)
+            if len(allies) == 0:
+                print("YOU LOST!!!")
                 break
 
-            elif hit >= main_char.armor.ac:
-                damage = roll_dice(combatant.weapon.damage)
-                main_char.current_hp -= damage
-                print("You took:", damage, "damage!")
-
-                if main_char.current_hp <= 0:
-                    print("YOU LOSE!!!")
-                    break
-            else:
-                print(enemy_char.name, "MISSED!")
+        else:
+            print("Your Turn:  ", combatant.name)
+            combatant.perform_action(allies, enemies)
+            if len(enemies) == 0:
+                print("YOU WON!!!")
+                break
+        # TODO: This is a future thought, but how could be move this into a combat session object?
+        # if not is_enemy:
+        # print_characters(main_char, enemy_char)
 
         sleep(1)
 
