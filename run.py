@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pprint import pprint
+from typing import List
 from time import sleep
 
 from combat import TurnManager
@@ -22,7 +23,8 @@ class Enemy(Combatable):
     # TODO: Make a sort of enemy stat display method
     # TODO: What if combatable makes it so that we have to create methods for fighting
     # Such as in essences performing a new action
-
+    def perform_action(allies: List[Combatable], enemies: List[Combatable]):
+        raise NotImplementedError
 
 @dataclass
 class PlayerCharacter(Combatable):
@@ -42,6 +44,8 @@ class PlayerCharacter(Combatable):
         print("You healed for: ", min(max_add, add_hp))
 
     # TODO: Make a sort of player stat display method
+    def perform_action(allies: List[Combatable], enemies: List[Combatable]):
+        raise NotImplementedError
 
 
 def print_characters(character: PlayerCharacter, enemy: Enemy):
