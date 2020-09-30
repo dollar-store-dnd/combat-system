@@ -21,7 +21,7 @@ class TurnManager:
     def remove_combatant(self, combatant: Combatable) -> None:
         raise NotImplementedError
 
-    def initiative(self):
+    def initiative(self) -> None:
         order = defaultdict(list)
 
         for combatant in self.combatants:
@@ -34,4 +34,6 @@ class TurnManager:
                 self.queue.appendleft(combatant)
 
     def next_turn(self):
-        raise NotImplementedError
+        character = self.queue[-1]
+        self.queue.rotate()
+        return character

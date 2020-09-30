@@ -71,17 +71,15 @@ def start_combat() -> None:
     # turn_manager.add_combatant(enemy_char, True)
 
     turn_manager.initiative()
-    exit()  # TODO: Remove this
 
     sleep(1)
 
     while True:
         # TODO: How can we use our new turn manager to manage this?
-        character = turn_queue[-1]
-        turn_queue.rotate()
+        combatant, is_enemy = turn_manager.next_turn()
 
         # TODO: This is a future thought, but how could be move this into a combat session object?
-        if isinstance(character, PlayerCharacter):
+        if not is_enemy:
             print_characters(main_char, enemy_char)
             print("Your turn:")
             action = input("- Attack   - Heal \n")
@@ -94,7 +92,7 @@ def start_combat() -> None:
                     multiplier = 2
 
                 if hit >= enemy_char.armor.ac:
-                    damage = roll_dice(character.weapon.damage) * multiplier
+                    damage = roll_dice(combatant.weapon.damage) * multiplier
                     enemy_char.current_hp -= damage
                     print("Enemy took:", damage, "damage!")
                     print("End turn!")
@@ -108,7 +106,7 @@ def start_combat() -> None:
 
             elif action == "Heal":
                 heal = roll_dice(damage=Damage(die_type=10, dice=1, type=""))
-                character.heal(heal)
+                combatant.heal(heal)
 
             else:
                 print("Inteligance check failed: skip your turn!")
@@ -123,7 +121,7 @@ def start_combat() -> None:
                 break
 
             elif hit >= main_char.armor.ac:
-                damage = roll_dice(character.weapon.damage)
+                damage = roll_dice(combatant.weapon.damage)
                 main_char.current_hp -= damage
                 print("You took:", damage, "damage!")
 
